@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+@theme {
+  /* Custom colors */
+  --color-koala-gray: #4a4a4a;
+  --color-koala-eucalyptus: #7c9885;
+  --color-koala-eucalyptus-light: #a8c4b0;
+  --color-koala-cream: #faf8f4;
+  --color-koala-sand: #e8e4dc;
+
+  /* Custom fonts */
+  --font-family-serif: 'Crimson Pro', ui-serif, Georgia, serif;
+  --font-family-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+
+  /* Custom animations */
+  --animate-wave: wave 3s ease-in-out infinite;
+  --animate-fadeInUp: fadeInUp 0.8s ease-out;
+  --animate-bounceIn: bounceIn 1s ease-out;
+  --animate-fadeIn: fadeIn 1s ease-out 0.3s both;
+}

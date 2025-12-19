@@ -1,7 +1,25 @@
 import { ParsedItinerary } from '@/types/trip';
 
 /**
- * Parse an itinerary message from the assistant to extract structured data
+ * Strip markdown formatting from text.
+ */
+function stripMarkdown(text: string): string {
+  return text
+    .replace(/\*\*([^*]+)\*\*/g, '$1') // **bold**
+    .replace(/\*([^*]+)\*/g, '$1')     // *italic*
+    .replace(/__([^_]+)__/g, '$1')     // __bold__
+    .replace(/_([^_]+)_/g, '$1')       // _italic_
+    .replace(/`([^`]+)`/g, '$1')       // `code`
+    .replace(/#{1,6}\s*/g, '')         // # headers
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // [links](url)
+    .replace(/^\s*[-*•]\s*/g, '')      // bullet points at start
+    .replace(/^\s*\d+\.\s*/g, '')      // numbered lists (1. 2. etc)
+    .replace(/:\s*$/, '')              // trailing colons
+    .trim();
+}
+
+/**
+ * Parse an itinerary message from the assistant to extract structured data.
  */
 export function parseItinerary(content: string): ParsedItinerary | null {
   try {
@@ -15,12 +33,12 @@ export function parseItinerary(content: string): ParsedItinerary | null {
     const budget = extractBudget(content);
 
     return {
-      destination,
-      dateRange,
-      transport,
-      accommodation,
-      highlights,
-      budget,
+      destination: stripMarkdown(destination),
+      dateRange: stripMarkdown(dateRange),
+      transport: stripMarkdown(transport),
+      accommodation: stripMarkdown(accommodation),
+      highlights: highlights.map(stripMarkdown),
+      budget: stripMarkdown(budget),
     };
   } catch (error) {
     console.error('Error parsing itinerary:', error);
@@ -103,24 +121,34 @@ function extractBudget(content: string): string {
 
 /**
  * Detect if the assistant is asking about saving the itinerary
+ * Only matches questions, not statements like "Ya he guardado".
  */
 export function detectSavePrompt(message: string): boolean {
+  // Must be a question about saving (contains ? or questioning words)
+  const isQuestion = message.includes('?') ||
+    /\b(quieres|deseas|te\s+gustar[ií]a|would\s+you\s+like)\b/i.test(message);
+
+  if (!isQuestion) return false;
+
+  // Patterns that indicate asking to save
   const savePromptPatterns = [
     /guardar\s*(este\s+)?itinerario/i,
     /guardar\s*(este\s+)?viaje/i,
     /quieres\s+que\s+(lo\s+)?guarde/i,
     /deseas\s+guardar/i,
     /te\s+gustar[ií]a\s+guardar/i,
+    /te\s+gustar[ií]a\s+que\s+(lo\s+)?guarde/i,
     /save\s*(this\s+)?itinerary/i,
-    /Mis\s+Viajes/i,
-    /My\s+Trips/i,
+    /would\s+you\s+like.*save/i,
+    /guardar.*["']?Mis\s+Viajes["']?/i,
+    /save.*["']?My\s+Trips["']?/i,
   ];
 
   return savePromptPatterns.some((pattern) => pattern.test(message));
 }
 
 /**
- * Detect if the user confirms saving
+ * Detect if the user confirms saving.
  */
 export function detectSaveConfirmation(message: string): boolean {
   const positivePatterns = [
@@ -142,7 +170,7 @@ export function detectSaveConfirmation(message: string): boolean {
 }
 
 /**
- * Find the message containing the itinerary summary
+ * Find the message containing the itinerary summary.
  */
 export function findItineraryMessage(
   messages: Array<{ role: string; content: string }>
@@ -159,7 +187,7 @@ export function findItineraryMessage(
 }
 
 /**
- * Parse date range string to start/end dates
+ * Parse date range string to start/end dates.
  */
 export function parseDateRange(dateRange: string): { start: string; end: string } {
   // Try to extract start and end from patterns like "8 al 11 de Enero"
@@ -176,7 +204,7 @@ export function parseDateRange(dateRange: string): { start: string; end: string 
 }
 
 /**
- * Calculate duration from date range
+ * Calculate duration from date range.
  */
 export function calculateDuration(dateRange: string): string {
   const match = dateRange.match(/(\d{1,2})\s*(?:al|a|-)\s*(\d{1,2})/);

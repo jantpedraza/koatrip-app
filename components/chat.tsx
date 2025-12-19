@@ -54,7 +54,7 @@ export default function Chat({ messages, onQuickQuestion, isLoading, onRetry }: 
   }
 
   return (
-    <div className="py-4 pb-32">
+    <div className="py-4 pb-4">
       {messages.map((msg, index) => (
         <ChatMessage
           key={index}

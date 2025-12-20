@@ -1,24 +1,6 @@
 import { ParsedItinerary } from '@/types/trip';
 
 /**
- * Strip markdown formatting from text.
- */
-function stripMarkdown(text: string): string {
-  return text
-    .replace(/\*\*([^*]+)\*\*/g, '$1') // **bold**
-    .replace(/\*([^*]+)\*/g, '$1')     // *italic*
-    .replace(/__([^_]+)__/g, '$1')     // __bold__
-    .replace(/_([^_]+)_/g, '$1')       // _italic_
-    .replace(/`([^`]+)`/g, '$1')       // `code`
-    .replace(/#{1,6}\s*/g, '')         // # headers
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // [links](url)
-    .replace(/^\s*[-*•]\s*/g, '')      // bullet points at start
-    .replace(/^\s*\d+\.\s*/g, '')      // numbered lists (1. 2. etc)
-    .replace(/:\s*$/, '')              // trailing colons
-    .trim();
-}
-
-/**
  * Parse an itinerary message from the assistant to extract structured data.
  */
 export function parseItinerary(content: string): ParsedItinerary | null {
@@ -33,12 +15,12 @@ export function parseItinerary(content: string): ParsedItinerary | null {
     const budget = extractBudget(content);
 
     return {
-      destination: stripMarkdown(destination),
-      dateRange: stripMarkdown(dateRange),
-      transport: stripMarkdown(transport),
-      accommodation: stripMarkdown(accommodation),
-      highlights: highlights.map(stripMarkdown),
-      budget: stripMarkdown(budget),
+      destination,
+      dateRange,
+      transport,
+      accommodation,
+      highlights,
+      budget,
     };
   } catch (error) {
     console.error('Error parsing itinerary:', error);

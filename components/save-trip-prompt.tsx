@@ -7,8 +7,12 @@ interface SaveTripPromptProps {
 
 export default function SaveTripPrompt({ onSave, onCancel }: SaveTripPromptProps) {
   return (
-    <div className="flex justify-start mb-4 animate-fadeInUp">
+    <div className="flex justify-start animate-fadeInUp">
       <div className="bg-white rounded-2xl px-5 py-4 rounded-bl-sm shadow-sm border border-[#e8e4dc]">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-lg">🐨</span>
+          <span className="text-xs font-medium text-[#7c9885]">Koatrip</span>
+        </div>
         <p className="text-[15px] text-[#2a2a2a] mb-4">
           Would you like to save this itinerary to &quot;My Trips&quot;?
         </p>

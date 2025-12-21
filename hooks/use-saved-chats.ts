@@ -33,6 +33,7 @@ export function useSavedChats() {
     if (messages.length === 0) return null;
 
     const now = new Date().toISOString();
+    const chatId = existingId || crypto.randomUUID();
 
     setChats((prev) => {
       let updated: SavedChat[];
@@ -47,7 +48,7 @@ export function useSavedChats() {
       } else {
         // Create new chat
         const newChat: SavedChat = {
-          id: crypto.randomUUID(),
+          id: chatId,
           title: generateTitle(messages),
           messages,
           createdAt: now,
@@ -60,7 +61,7 @@ export function useSavedChats() {
       return updated;
     });
 
-    return existingId || crypto.randomUUID();
+    return chatId;
   }, []);
 
   const deleteChat = useCallback((id: string) => {

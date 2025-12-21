@@ -5,13 +5,13 @@ import { useSearchParams } from 'next/navigation';
 import Sidebar from '@/components/sidebar';
 import Chat from '@/components/chat';
 import UserInput from '@/components/user-input';
-import SaveTripPrompt from '@/components/save-trip-prompt';
 import { useChat } from '@/hooks/use-chat';
 import { useTrips } from '@/hooks/use-trips';
 import { useSavedChats } from '@/hooks/use-saved-chats';
 import {
   parseItinerary,
   detectSavePrompt,
+  detectSaveConfirmation,
   findItineraryMessage,
   parseDateRange,
   calculateDuration,
@@ -23,10 +23,10 @@ function HomeContent() {
   const { messages, isLoading, error, sendMessage, retryMessage, clearMessages, loadMessages } = useChat();
   const { saveTrip } = useTrips();
   const { saveChat, getChatById } = useSavedChats();
-  const [showSavePrompt, setShowSavePrompt] = useState(false);
   const [itineraryToSave, setItineraryToSave] = useState<string | null>(null);
   const [tripSaved, setTripSaved] = useState(false);
   const [lastProcessedLength, setLastProcessedLength] = useState(0);
+  const [awaitingSaveConfirmation, setAwaitingSaveConfirmation] = useState(false);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -38,11 +38,11 @@ function HomeContent() {
       // Use setTimeout to avoid setState cascade in effect
       setTimeout(() => {
         setMessage('');
-        setShowSavePrompt(false);
         setItineraryToSave(null);
         setTripSaved(false);
         setLastProcessedLength(0);
         setCurrentChatId(null);
+        setAwaitingSaveConfirmation(false);
       }, 0);
       // Clean up the URL without the param
       window.history.replaceState({}, '', '/');
@@ -98,7 +98,7 @@ function HomeContent() {
       messages.length > lastProcessedLength &&
       !isLoading &&
       !tripSaved &&
-      !showSavePrompt
+      !awaitingSaveConfirmation
     ) {
       const lastMessage = messages[messages.length - 1];
       if (
@@ -110,19 +110,25 @@ function HomeContent() {
           // Use setTimeout to avoid synchronous setState in effect
           setTimeout(() => {
             setItineraryToSave(itineraryMsg);
-            setShowSavePrompt(true);
+            setAwaitingSaveConfirmation(true);
             setLastProcessedLength(messages.length);
           }, 0);
         }
       }
     }
-  }, [messages, isLoading, tripSaved, showSavePrompt, lastProcessedLength]);
+  }, [messages, isLoading, tripSaved, awaitingSaveConfirmation, lastProcessedLength]);
 
   const handleSend = async () => {
     if (message.trim() && !isLoading) {
       const currentMessage = message;
       setMessage('');
-      setShowSavePrompt(false);
+
+      // Check if user is confirming save
+      if (awaitingSaveConfirmation && itineraryToSave && detectSaveConfirmation(currentMessage)) {
+        handleSaveTrip();
+      }
+      setAwaitingSaveConfirmation(false);
+
       await sendMessage(currentMessage);
     }
   };
@@ -150,15 +156,9 @@ function HomeContent() {
         });
 
         setTripSaved(true);
-        setShowSavePrompt(false);
         setItineraryToSave(null);
       }
     }
-  };
-
-  const handleCancelSave = () => {
-    setShowSavePrompt(false);
-    setItineraryToSave(null);
   };
 
   return (
@@ -182,16 +182,8 @@ function HomeContent() {
               onRetry={retryMessage}
             />
 
-            {/* Save prompt */}
-            {showSavePrompt && !isLoading && (
-              <SaveTripPrompt
-                onSave={handleSaveTrip}
-                onCancel={handleCancelSave}
-              />
-            )}
-
             {/* Saved confirmation */}
-            {tripSaved && !showSavePrompt && (
+            {tripSaved && (
               <div className="flex justify-start mb-4 animate-fadeInUp">
                 <div className="bg-[#e8f5e9] rounded-2xl px-5 py-4 rounded-bl-sm border border-[#a5d6a7]">
                   <p className="text-[15px] text-[#2e7d32] flex items-center gap-2">
